@@ -1,5 +1,5 @@
 export class CoreConfig {
-  hostname = 'djaty.com';
+  hostname = 'bugs.djaty.com';
   apiPath = '/api';
 
   // If user doesn't define a value for timelineLimit this value will be used.

@@ -1,12 +1,12 @@
 {
   "name": "@djaty/djaty-nodejs",
-  "version": "1.0.0-beta",
+  "version": "1.0.2-beta",
   "description": "Official Djaty SDK for NodeJS",
   "repository": {
     "type": "git",
     "url": "git://github.com/Djaty/djaty-nodejs.git"
   },
-  "homepage": "https://djaty.com/docs/SDKs/nodeJs",
+  "homepage": "https://djaty.com/docs/SDKs/nodeJs/index.html",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {

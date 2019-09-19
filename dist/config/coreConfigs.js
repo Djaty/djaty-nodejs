@@ -2,7 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 class CoreConfig {
     constructor() {
-        this.hostname = 'djaty.com';
+        this.hostname = 'bugs.djaty.com';
         this.apiPath = '/api';
         // If user doesn't define a value for timelineLimit this value will be used.
         this.timelineDefaultMaxLimit = 30;
