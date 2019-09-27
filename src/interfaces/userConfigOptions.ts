@@ -5,8 +5,8 @@ import {AgentData} from './agentData';
 import {DefaultStages} from '..';
 
 export interface UserConfigOptions {
-  apiKey: string;
-  apiSecret: string;
+  apiKey?: string;
+  apiSecret?: string;
 
   // Default true. If false, Djaty will not functioning at all as if it's not integrated.
   djatyIsTracking?: boolean;

@@ -4,8 +4,8 @@ import { UserTrackingOptions } from './userTrackingOptions';
 import { AgentData } from './agentData';
 import { DefaultStages } from '..';
 export interface UserConfigOptions {
-    apiKey: string;
-    apiSecret: string;
+    apiKey?: string;
+    apiSecret?: string;
     djatyIsTracking?: boolean;
     trackingOptions?: UserTrackingOptions;
     server?: UserServerConfig;

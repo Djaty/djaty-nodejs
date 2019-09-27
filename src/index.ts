@@ -120,7 +120,7 @@ export class Djaty extends EventEmitter implements DjatyInterface {
         return this;
       }
 
-      const userOptions: UserConfigOptions = _.assign({}, options || {}, {
+      const userOptions: UserConfigOptions = _.defaults({}, options || {}, {
         apiKey: process.env.DJATY_API_KEY,
         apiSecret: process.env.DJATY_API_SECRET,
         release: process.env.DJATY_RELEASE,
