@@ -23,5 +23,8 @@ To use the NodeJS SDK inside Express and Koa based applications, please take a l
 ## Install dependencies
 `$ npm install`
 
+## Run build
+`$ npm run build`
+
 ## Run tests
 `$ npm run test`
