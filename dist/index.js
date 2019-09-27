@@ -76,7 +76,7 @@ class Djaty extends events_1.EventEmitter {
                     ' want djaty-javascript for browser? https://djaty.com/');
                 return this;
             }
-            const userOptions = _.assign({}, options || {}, {
+            const userOptions = _.defaults({}, options || {}, {
                 apiKey: process.env.DJATY_API_KEY,
                 apiSecret: process.env.DJATY_API_SECRET,
                 release: process.env.DJATY_RELEASE,
