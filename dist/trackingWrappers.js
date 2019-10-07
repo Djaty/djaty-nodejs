@@ -62,7 +62,7 @@ const wrappers = {
         fill(process.stderr, 'write', (originalStdMethod) => (...stdParams) => {
             const param = stdParams[0];
             if (util.isString(param) && param.match(new RegExp(`^${constants_1.DJATY_ALERTS_PREFIX}`))) {
-                return originalStdMethod.apply(process.stdout, stdParams);
+                return originalStdMethod.apply(process.stderr, stdParams);
             }
             originalStdMethod.apply(process.stderr, stdParams);
             const consoleItem = utils.formatConsoleItem('error', stdParams);

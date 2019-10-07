@@ -79,7 +79,7 @@ const wrappers: TrackingWrappers = {
     fill(process.stderr, 'write', (originalStdMethod: Function) => (...stdParams: any[]) => {
       const param = stdParams[0];
       if (util.isString(param) && param.match(new RegExp(`^${DJATY_ALERTS_PREFIX}`))) {
-        return originalStdMethod.apply(process.stdout, stdParams);
+        return originalStdMethod.apply(process.stderr, stdParams);
       }
 
       originalStdMethod.apply(process.stderr, stdParams);

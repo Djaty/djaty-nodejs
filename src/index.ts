@@ -1,4 +1,4 @@
-// Use patched promise. It must Run at the start.
+// Use patches. they must Run at the start.
 import {PatchedPromise} from './wrappers/domainPromiseWrapper';
 global.Promise = PatchedPromise;
 
@@ -40,10 +40,13 @@ const computerName = require('computer-name');
 // tslint:disable-next-line no-require-imports
 const domain = <DjatyDomain> require('domain');
 
-const ajv = new Ajv();
+const ajv = new Ajv({allErrors: true, jsonPointers: true});
 
 // tslint:disable-next-line no-require-imports
 require('ajv-keywords')(ajv, 'instanceof');
+
+// tslint:disable-next-line no-require-imports
+require('ajv-errors')(ajv);
 
 export class Djaty extends EventEmitter implements DjatyInterface {
   //noinspection JSUnusedGlobalSymbols
@@ -309,7 +312,13 @@ export class Djaty extends EventEmitter implements DjatyInterface {
         // Exiting stacked Domains to avoid leaking the context between server requests.
         // Ref: https://github.com/nodejs/node/issues/26081
         // @TODO, find better solution
-        (domain._stack || []).forEach(stackedDomain => stackedDomain.exit());
+        (domain._stack || []).forEach(stacked => {
+          if (!['reqWrapDomain', 'asyncLoopDomain', 'djatyErrorsDomain'].includes(stacked.__name)) {
+            return;
+          }
+
+          stacked.exit();
+        });
 
         return;
       }
@@ -801,7 +810,13 @@ export class Djaty extends EventEmitter implements DjatyInterface {
     // Exiting stacked Domains to avoid leaking the context between server requests.
     // Ref: https://github.com/nodejs/node/issues/26081
     // @TODO, find better solution
-    (domain._stack || []).forEach(stackedDomain => stackedDomain.exit());
+    (domain._stack || []).forEach(stacked => {
+      if (!['reqWrapDomain', 'asyncLoopDomain', 'djatyErrorsDomain'].includes(stacked.__name)) {
+        return;
+      }
+
+      stacked.exit();
+    });
 
     if (!this.options.exitOnUncaughtExceptions) {
       return;

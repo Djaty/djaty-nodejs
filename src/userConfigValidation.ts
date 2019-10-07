@@ -16,9 +16,6 @@ export const userConfigSchema = {
     djatyIsTracking: {
       type: 'boolean',
     },
-    addGlobalCustomData: {
-      'instanceof': 'Function',
-    },
     allowAutoSubmission: {
       type: 'boolean',
     },
@@ -94,8 +91,11 @@ export const userConfigSchema = {
       type: 'array',
       items: {
         type: 'string',
-        maxLength: 45,
-        minLength: 1,
+        pattern: '^[^ \/,]{1,255}$',
+        errorMessage: {
+          pattern: 'Tags are 1 to 255 characters long and should not include spaces,' +
+            'commas or forward slashes',
+        },
       },
       maxItems: TAGS_LIMIT,
       uniqueItems: true,

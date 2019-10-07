@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-// Use patched promise. It must Run at the start.
+// Use patches. they must Run at the start.
 const domainPromiseWrapper_1 = require("./wrappers/domainPromiseWrapper");
 global.Promise = domainPromiseWrapper_1.PatchedPromise;
 const events_1 = require("events");
@@ -20,9 +20,11 @@ const serverLocalIp = require('ip').address();
 const computerName = require('computer-name');
 // tslint:disable-next-line no-require-imports
 const domain = require('domain');
-const ajv = new Ajv();
+const ajv = new Ajv({ allErrors: true, jsonPointers: true });
 // tslint:disable-next-line no-require-imports
 require('ajv-keywords')(ajv, 'instanceof');
+// tslint:disable-next-line no-require-imports
+require('ajv-errors')(ajv);
 class Djaty extends events_1.EventEmitter {
     // noinspection JSUnusedLocalSymbols
     constructor(coreConfig) {
@@ -226,7 +228,12 @@ class Djaty extends events_1.EventEmitter {
                 // Exiting stacked Domains to avoid leaking the context between server requests.
                 // Ref: https://github.com/nodejs/node/issues/26081
                 // @TODO, find better solution
-                (domain._stack || []).forEach(stackedDomain => stackedDomain.exit());
+                (domain._stack || []).forEach(stacked => {
+                    if (!['reqWrapDomain', 'asyncLoopDomain', 'djatyErrorsDomain'].includes(stacked.__name)) {
+                        return;
+                    }
+                    stacked.exit();
+                });
                 return;
             }
             // Catching the request domain context before using the `djatyErrorsDomain`.
@@ -594,7 +601,12 @@ class Djaty extends events_1.EventEmitter {
         // Exiting stacked Domains to avoid leaking the context between server requests.
         // Ref: https://github.com/nodejs/node/issues/26081
         // @TODO, find better solution
-        (domain._stack || []).forEach(stackedDomain => stackedDomain.exit());
+        (domain._stack || []).forEach(stacked => {
+            if (!['reqWrapDomain', 'asyncLoopDomain', 'djatyErrorsDomain'].includes(stacked.__name)) {
+                return;
+            }
+            stacked.exit();
+        });
         if (!this.options.exitOnUncaughtExceptions) {
             return;
         }

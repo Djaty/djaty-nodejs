@@ -12,9 +12,6 @@ export declare const userConfigSchema: {
         djatyIsTracking: {
             type: string;
         };
-        addGlobalCustomData: {
-            'instanceof': string;
-        };
         allowAutoSubmission: {
             type: string;
         };
@@ -90,8 +87,10 @@ export declare const userConfigSchema: {
             type: string;
             items: {
                 type: string;
-                maxLength: number;
-                minLength: number;
+                pattern: string;
+                errorMessage: {
+                    pattern: string;
+                };
             };
             maxItems: number;
             uniqueItems: boolean;

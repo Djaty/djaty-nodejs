@@ -1,6 +1,6 @@
 {
   "name": "@djaty/djaty-nodejs",
-  "version": "1.0.4-beta",
+  "version": "1.0.5-beta",
   "description": "Official Djaty SDK for NodeJS",
   "repository": {
     "type": "git",
@@ -33,10 +33,12 @@
     "ES6"
   ],
   "dependencies": {
+    "@types/ajv-errors": "^1.0.2",
     "@types/express": "4.0.39",
     "@types/koa": "2.0.40",
     "@types/koa-compose": "3.2.2",
     "ajv": "6.5.0",
+    "ajv-errors": "^1.0.1",
     "ajv-keywords": "3.2.0",
     "bluebird": "3.5.1",
     "computer-name": "0.1.0",
