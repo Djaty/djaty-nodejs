@@ -18,7 +18,14 @@ const expressApp = require('express/lib/application');
 
 const orgMethod = expressApp.handle;
 expressApp.handle = function (...args: any[]) {
-  const reqWrapDomain = domain.active ? domain.active : domain.create();
+  const activeDomain = domain.active;
+
+  if (activeDomain && activeDomain.__name === 'reqWrapDomain') {
+    return activeDomain.bind(orgMethod).apply(this, args);
+  }
+
+  const reqWrapDomain = domain.create();
   reqWrapDomain.__name = 'reqWrapDomain';
+
   return reqWrapDomain.bind(orgMethod).apply(this, args);
 };

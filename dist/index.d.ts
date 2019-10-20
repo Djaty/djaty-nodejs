@@ -48,7 +48,7 @@ export declare class Djaty extends EventEmitter implements DjatyInterface {
      *
      * @returns {(req:Express.Request, res:Express.Response, next:Function)=>undefined}
      */
-    requestHandler(): (req: Express.Request, res: Express.Response, next: Function) => void;
+    requestHandler(): (req: Express.Request, res: Express.Response, next: Function) => any;
     /**
      * Express Error Handler middleware.
      *
@@ -113,12 +113,12 @@ export declare class Djaty extends EventEmitter implements DjatyInterface {
     private setContext(activeDomain, ctx);
     private resetCtxTimeline(activeDomain);
     /**
-     * captureUnhandledException
+     * captureError
      *
      * @param err: `any` as the err can result from `throw 'text or anything else'`
      * @param errType
      */
-    private captureUnhandledException(err, errType);
+    private captureError(err, errType?);
     private sendUserFilterError(activeDomain, ctxArgs, filterErr, cb);
     private trackExceptionItem(err, activeDomain);
     private wrap(func);

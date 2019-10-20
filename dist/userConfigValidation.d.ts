@@ -100,38 +100,32 @@ export declare const userConfigSchema: {
             additionalProperties: boolean;
             properties: {
                 allowedWrappers: {
-                    anyOf: ({
-                        type: string;
-                        additionalProperties: boolean;
-                        properties: {
-                            console: {
+                    type: string;
+                    additionalProperties: boolean;
+                    properties: {
+                        console: {
+                            type: string;
+                        };
+                        customLoggers: {
+                            type: string;
+                            items: {
                                 type: string;
-                            };
-                            customLoggers: {
-                                type: string;
-                                items: {
-                                    type: string;
-                                    additionalProperties: boolean;
-                                    properties: {
-                                        name: {
-                                            'enum': AllowedCustomLoggers[];
-                                        };
+                                additionalProperties: boolean;
+                                properties: {
+                                    name: {
+                                        'enum': AllowedCustomLoggers[];
                                     };
-                                    required: string[];
                                 };
-                            };
-                            http: {
-                                type: string;
-                            };
-                            stdLogs: {
-                                type: string;
+                                required: string[];
                             };
                         };
-                    } | {
-                        type: string;
-                        additionalProperties?: undefined;
-                        properties?: undefined;
-                    })[];
+                        http: {
+                            type: string;
+                        };
+                        stdLogs: {
+                            type: string;
+                        };
+                    };
                 };
                 captureUnhandledRejections: {
                     type: string;
