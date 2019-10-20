@@ -254,7 +254,7 @@ export class Djaty extends EventEmitter implements DjatyInterface {
 
     return (req: Express.Request, res: Express.Response, next: Function) => {
       // The function that we wish to run on every request
-      this.wrap(() => {
+      return this.wrap(() => {
         return this.wrapWithTryCatch(() => {
           // If user server is receiving further requests during tracking another previous uncaught
           // exception. To minimize entering this condition we need to handle the previous exception
@@ -279,7 +279,8 @@ export class Djaty extends EventEmitter implements DjatyInterface {
 
           this.setContext(activeDomain, currCtx);
           this.trackTimelineItem(activeDomain, receivedReq);
-          next();
+
+          return next();
         });
       });
     };
@@ -303,9 +304,15 @@ export class Djaty extends EventEmitter implements DjatyInterface {
     return (err: utils.RequestError, req: Express.Request, res: Express.Response,
             next: Function) => {
 
-      next(err);
+      // Don't pass and call `next` to handle Koa as it doesn't handle errors by `next(err)`.
+      if (next) {
+        next(err);
+      }
 
-      const status = err.status || err.statusCode || err.status_code || 500;
+      const status = err.status || err.statusCode || Number(err.status_code) || 500;
+
+      // Handle Koa: We should set the status code of the response to handle the request properly.
+      if (!res.headersSent) res.statusCode = status;
 
       // skip anything not marked as an internal server error
       if (status < 500) {
@@ -323,85 +330,7 @@ export class Djaty extends EventEmitter implements DjatyInterface {
         return;
       }
 
-      // Catching the request domain context before using the `djatyErrorsDomain`.
-      const activeDomain: ActiveDomain | undefined = domain.active;
-
-      this.djatyErrorsDomain.run(() => {
-        return this.wrapWithTryCatch(() => {
-          if (activeDomain && !utils.isReqWrapDomain(activeDomain)) {
-            // A guard to prevent tracking errors inside a nested user domain.
-            utils.consoleAlertError('Nested Domain! Tracking disabled for current request.');
-            this.onAfterErrorHandled();
-
-            return;
-          }
-
-          const exception = this.trackExceptionItem(err, activeDomain);
-          const shortTitle = exception!.msg.substr(0, 255);
-          const ctxArgs: ContextArgs = <any>{
-            hash: exception!.hash,
-            shortTitle,
-            longTitle: shortTitle,
-          };
-
-          const agentData = this.prepareSubmissionPayload(activeDomain, ctxArgs);
-
-          this.process(activeDomain, agentData, (processErr, ack) => {
-            if (!this.options.allowAutoSubmission) {
-              this.onAfterErrorHandled();
-
-              return;
-            }
-
-            // Submission failed
-            if (processErr) {
-              if (processErr instanceof utils.DjatyError) {
-                // Cannot submit for a known reason.
-                this.trackConsoleError(activeDomain, [processErr]);
-                this.onAfterErrorHandled();
-
-                return;
-              }
-
-              // Cannot submit for an unknown reason, just log it.
-              utils.consoleAlertError('Unknown submission err: ', processErr, 'Original err:', err);
-              this.onAfterErrorHandled();
-
-              return;
-            }
-
-            // Submission done successfully
-            if (ack === utils.ProcessAcknowledge.USER_FILTER_ERROR) {
-              utils.consoleAlert('Djaty.onBeforeSubmission() is not configured properly. ' +
-                'A detailed bug reported.');
-
-              this.onAfterErrorHandled();
-
-              return;
-            }
-
-            if (ack === utils.ProcessAcknowledge.DJATY_CRASH_REPORT_SENT) {
-              utils.consoleAlert('Djaty crash report submitted successfully.');
-              this.onAfterErrorHandled();
-
-              return;
-            }
-
-            if (ack === utils.ProcessAcknowledge.DJATY_CRASH_REPORT_DISABLED) {
-              utils.consoleAlert('Djaty has encountered a problem and the crash report cannot be' +
-                ' sent. For a better experience and to help us fix those kinds of problems in the' +
-                ' future, please enable \'reportDjatyCrashes\' option.');
-
-              this.onAfterErrorHandled();
-
-              return;
-            }
-
-            utils.consoleAlert('Uncaught exception reported:', err.message);
-            this.onAfterErrorHandled();
-          });
-        });
-      });
+      this.captureError(err);
     };
   }
 
@@ -903,7 +832,7 @@ export class Djaty extends EventEmitter implements DjatyInterface {
 
         this.trackConsoleError(activeDomain, [filterUncaughtExceptionMsg]);
 
-        // Use `trackExceptionItem` and not `captureUnhandledException` to avoid infinite loops.
+        // Use `trackExceptionItem` and not `captureError` to avoid infinite loops.
         const exception = this.trackExceptionItem(err, activeDomain);
         const shortTitle = exception!.msg.substr(0, 255);
         const ctxArgs = <ContextArgs>{
@@ -1088,7 +1017,10 @@ export class Djaty extends EventEmitter implements DjatyInterface {
 
   private registerExceptionHandler() {
     const errType = 'uncaughtException';
-    process.on(errType, (err: any) => this.captureUnhandledException(err, errType));
+    process.on(errType, (err: any) => {
+      utils.consoleAlertError(`${errType}:`, err);
+      this.captureError(err);
+    });
   }
 
   /**
@@ -1097,7 +1029,10 @@ export class Djaty extends EventEmitter implements DjatyInterface {
    */
   private registerRejectionHandler() {
     const errType = 'unhandledRejection';
-    process.on(errType, (err: any) => this.captureUnhandledException(err, errType));
+    process.on(errType, (err: any) => {
+      utils.consoleAlertError(`${errType}:`, err);
+      this.captureError(err, errType);
+    });
   }
 
   private setContext(activeDomain: ActiveDomain | undefined, ctx: ContextArgs) {
@@ -1137,12 +1072,12 @@ export class Djaty extends EventEmitter implements DjatyInterface {
   }
 
   /**
-   * captureUnhandledException
+   * captureError
    *
    * @param err: `any` as the err can result from `throw 'text or anything else'`
    * @param errType
    */
-  private captureUnhandledException(err: any, errType: string) {
+  private captureError(err: any, errType = 'uncaughtException') {
     // Catching the request domain context before using the `djatyErrorsDomain`.
     const activeDomain: ActiveDomain | undefined = domain.active;
     if (activeDomain && !utils.isReqWrapDomain(activeDomain)) {
@@ -1162,8 +1097,6 @@ export class Djaty extends EventEmitter implements DjatyInterface {
           return;
         }
 
-        utils.consoleAlertError(`${errType}:`, err);
-
         if (this.options.exitOnUncaughtExceptions) {
           if (this.isUncaughtExceptionCaught) {
             return;
@@ -1172,7 +1105,12 @@ export class Djaty extends EventEmitter implements DjatyInterface {
           this.isUncaughtExceptionCaught = true;
         }
 
+        let isSent = false;
         setTimeout(() => {
+          if (isSent) {
+            return;
+          }
+
           utils.consoleAlertError('An error has been tracked but not submitted as the tracking ' +
             'process has timed out!', 'error:', err);
 
@@ -1183,11 +1121,11 @@ export class Djaty extends EventEmitter implements DjatyInterface {
         }, this.coreConfig.exceptionTrackingTimeout).unref();
 
         const exception = this.trackExceptionItem(err, activeDomain);
-        const exceptionMsg = exception!.msg.substr(0, 255);
+        const shortTitle = exception!.msg.substr(0, 255);
         const ctxArgs: ContextArgs = <any>{
-          longTitle: exceptionMsg,
-          shortTitle: exceptionMsg,
           hash: exception!.hash,
+          shortTitle,
+          longTitle: shortTitle,
         };
 
         const agentData = this.prepareSubmissionPayload(activeDomain, ctxArgs);
@@ -1198,6 +1136,8 @@ export class Djaty extends EventEmitter implements DjatyInterface {
 
             return;
           }
+
+          isSent = true;
 
           // Submission failed
           if (processErr) {
@@ -1243,7 +1183,7 @@ export class Djaty extends EventEmitter implements DjatyInterface {
             return;
           }
 
-          utils.consoleAlert(`${errType} reported:`, err.message);
+          utils.consoleAlert(`${errType} reported`, err.message ? `: ${err.message}` : '');
           this.onAfterErrorHandled();
         });
       });
@@ -1291,9 +1231,14 @@ export class Djaty extends EventEmitter implements DjatyInterface {
   }
 
   private wrap(func: Function) {
-    const reqWrapDomain = domain.active ? domain.active : domain.create();
-    reqWrapDomain.__name = 'reqWrapDomain';
-    reqWrapDomain.on('error', this.captureUnhandledException.bind(this));
+    let reqWrapDomain = domain.active;
+
+    if (!reqWrapDomain || reqWrapDomain.__name !== 'reqWrapDomain') {
+      reqWrapDomain = domain.create();
+      reqWrapDomain!.__name = 'reqWrapDomain';
+    }
+
+    reqWrapDomain!.on('error', this.captureError.bind(this));
 
     // `try/catch` is a workaround. As domains internally depend on a special
     // `uncaughtException` event to catch errors, they don't catch sync errors that are swallowed
@@ -1302,11 +1247,11 @@ export class Djaty extends EventEmitter implements DjatyInterface {
     // So, we must use `try/catch` every time we use `domain.run()` as it always prevents
     // the error from being swallowed.
     // `run()` sets the domain.active
-    return reqWrapDomain.run(() => {
+    return reqWrapDomain!.run(() => {
       try {
-        func.call(this);
+        return func.call(this);
       } catch (err) {
-        this.captureUnhandledException.bind(this);
+        this.captureError(err);
       }
     });
   }

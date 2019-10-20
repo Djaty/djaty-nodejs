@@ -105,37 +105,32 @@ exports.userConfigSchema = {
             additionalProperties: false,
             properties: {
                 allowedWrappers: {
-                    anyOf: [{
-                            type: 'object',
-                            additionalProperties: false,
-                            properties: {
-                                console: {
-                                    type: 'boolean',
-                                },
-                                customLoggers: {
-                                    type: 'array',
-                                    items: {
-                                        type: 'object',
-                                        additionalProperties: false,
-                                        properties: {
-                                            name: {
-                                                'enum': [allowedCustomLoggers_1.AllowedCustomLoggers.winston],
-                                            },
-                                        },
-                                        required: ['name'],
+                    type: 'object',
+                    additionalProperties: false,
+                    properties: {
+                        console: {
+                            type: 'boolean',
+                        },
+                        customLoggers: {
+                            type: 'array',
+                            items: {
+                                type: 'object',
+                                additionalProperties: false,
+                                properties: {
+                                    name: {
+                                        'enum': [allowedCustomLoggers_1.AllowedCustomLoggers.winston],
                                     },
                                 },
-                                http: {
-                                    type: 'boolean',
-                                },
-                                stdLogs: {
-                                    type: 'boolean',
-                                },
+                                required: ['name'],
                             },
                         },
-                        {
+                        http: {
                             type: 'boolean',
-                        }],
+                        },
+                        stdLogs: {
+                            type: 'boolean',
+                        },
+                    },
                 },
                 captureUnhandledRejections: {
                     type: 'boolean',

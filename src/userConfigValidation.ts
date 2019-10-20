@@ -105,37 +105,32 @@ export const userConfigSchema = {
       additionalProperties: false,
       properties: {
         allowedWrappers: {
-          anyOf: [{
-            type: 'object',
-            additionalProperties: false,
-            properties: {
-              console: {
-                type: 'boolean',
-              },
-              customLoggers: {
-                type: 'array',
-                items: {
-                  type: 'object',
-                  additionalProperties: false,
-                  properties: {
-                    name: {
-                      'enum': [AllowedCustomLoggers.winston],
-                    },
+          type: 'object',
+          additionalProperties: false,
+          properties: {
+            console: {
+              type: 'boolean',
+            },
+            customLoggers: {
+              type: 'array',
+              items: {
+                type: 'object',
+                additionalProperties: false,
+                properties: {
+                  name: {
+                    'enum': [AllowedCustomLoggers.winston],
                   },
-                  required: ['name'],
                 },
-              },
-              http: {
-                type: 'boolean',
-              },
-              stdLogs: {
-                type: 'boolean',
+                required: ['name'],
               },
             },
+            http: {
+              type: 'boolean',
+            },
+            stdLogs: {
+              type: 'boolean',
+            },
           },
-          {
-            type: 'boolean',
-          }],
         },
         captureUnhandledRejections: {
           type: 'boolean',

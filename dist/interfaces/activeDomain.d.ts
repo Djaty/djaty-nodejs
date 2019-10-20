@@ -5,5 +5,7 @@ export interface ActiveDomain {
     add: Function;
     bind: Function;
     exit: Function;
+    on: Function;
+    run: Function;
     members?: any[];
 }
