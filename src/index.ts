@@ -171,8 +171,6 @@ export class Djaty extends EventEmitter implements DjatyInterface {
 
       if (!this.options.djatyIsTracking) {
         utils.consoleAlertError('`options.djatyIsTracking` is `false`. Bug tracking disabled!');
-
-        return this;
       }
 
       if (!this.options.apiKey || !this.options.apiSecret) {
@@ -253,7 +251,11 @@ export class Djaty extends EventEmitter implements DjatyInterface {
     this.isRequestHandlerInstalled = true;
 
     return (req: Express.Request, res: Express.Response, next: Function) => {
-      // The function that we wish to run on every request
+      if (!this.options.djatyIsTracking) {
+        // We must return the `next()` to support Koa
+        return next();
+      }
+
       return this.wrap(() => {
         return this.wrapWithTryCatch(() => {
           // If user server is receiving further requests during tracking another previous uncaught
@@ -280,6 +282,7 @@ export class Djaty extends EventEmitter implements DjatyInterface {
           this.setContext(activeDomain, currCtx);
           this.trackTimelineItem(activeDomain, receivedReq);
 
+          // We must return the `next()` to support Koa
           return next();
         });
       });
@@ -314,6 +317,10 @@ export class Djaty extends EventEmitter implements DjatyInterface {
       // Handle Koa: We should set the status code of the response to handle the request properly.
       if (!res.headersSent) res.statusCode = status;
 
+      if (!this.options.djatyIsTracking) {
+        return;
+      }
+
       // skip anything not marked as an internal server error
       if (status < 500) {
         // Exiting stacked Domains to avoid leaking the context between server requests.
@@ -343,6 +350,10 @@ export class Djaty extends EventEmitter implements DjatyInterface {
         return this;
       }
 
+      if (!this.options.djatyIsTracking) {
+        return this;
+      }
+
       const trackedUser = {userId, logon};
 
       if (!this.isTrackedUserValidObj(domain.active, trackedUser)) {
@@ -366,6 +377,10 @@ export class Djaty extends EventEmitter implements DjatyInterface {
         this.trackConsoleError(domain.active, ['addBeforeSubmissionHandler(): Initiate ' +
         'Djaty first.']);
 
+        return this;
+      }
+
+      if (!this.options.djatyIsTracking) {
         return this;
       }
 
@@ -394,6 +409,10 @@ export class Djaty extends EventEmitter implements DjatyInterface {
         this.trackConsoleError(domain.active, ['addBeforeSubmissionContextHandler(): ' +
         'Initiate Djaty first']);
 
+        return this;
+      }
+
+      if (!this.options.djatyIsTracking) {
         return this;
       }
 
@@ -429,6 +448,10 @@ export class Djaty extends EventEmitter implements DjatyInterface {
         return this;
       }
 
+      if (!this.options.djatyIsTracking) {
+        return this;
+      }
+
       this.customDataList.push(data);
 
       return this;
@@ -444,6 +467,10 @@ export class Djaty extends EventEmitter implements DjatyInterface {
       if (!this.isInitiated) {
         this.trackConsoleError(domain.active, ['addContextCustomData(): Initiate Djaty first']);
 
+        return this;
+      }
+
+      if (!this.options.djatyIsTracking) {
         return this;
       }
 
@@ -468,16 +495,20 @@ export class Djaty extends EventEmitter implements DjatyInterface {
     return new Promise((resolve, reject) => {
       this.djatyErrorsDomain.run(() => {
         return this.wrapWithTryCatch(() => {
-          if (activeDomain && !utils.isReqWrapDomain(activeDomain)) {
-            // A guard to prevent tracking errors inside a nested user domain.
-            utils.consoleAlertError('Nested Domain! Tracking disabled for current request.');
+          if (!this.isInitiated) {
+            reject(new utils.DjatyError(`trackBug(): Initiate Djaty first.`,
+              utils.DjatyErrorCodes.NOT_INITIATED));
 
             return;
           }
 
-          if (!this.isInitiated) {
-            reject(new utils.DjatyError(`trackBug(): Initiate Djaty first.`,
-              utils.DjatyErrorCodes.NOT_INITIATED));
+          if (!this.options.djatyIsTracking) {
+            return;
+          }
+
+          if (activeDomain && !utils.isReqWrapDomain(activeDomain)) {
+            // A guard to prevent tracking errors inside a nested user domain.
+            utils.consoleAlertError('Nested Domain! Tracking disabled for current request.');
 
             return;
           }
@@ -531,8 +562,12 @@ export class Djaty extends EventEmitter implements DjatyInterface {
   }
 
   trackTimelineItem(activeDomain: ActiveDomain | undefined, timelineItem: TimelineItemUnion) {
-    // Avoid capturing tracked items before instrumentation finishes.
+    // Avoid capturing tracked items before initialization finishes.
     if (!this.isInitiated) {
+      return;
+    }
+
+    if (!this.options.djatyIsTracking) {
       return;
     }
 

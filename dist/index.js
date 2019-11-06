@@ -119,7 +119,6 @@ class Djaty extends events_1.EventEmitter {
             }
             if (!this.options.djatyIsTracking) {
                 utils.consoleAlertError('`options.djatyIsTracking` is `false`. Bug tracking disabled!');
-                return this;
             }
             if (!this.options.apiKey || !this.options.apiSecret) {
                 throw new utils.DjatyError('Project keys are missing. Bug tracking disabled!');
@@ -182,7 +181,10 @@ class Djaty extends events_1.EventEmitter {
         }
         this.isRequestHandlerInstalled = true;
         return (req, res, next) => {
-            // The function that we wish to run on every request
+            if (!this.options.djatyIsTracking) {
+                // We must return the `next()` to support Koa
+                return next();
+            }
             return this.wrap(() => {
                 return this.wrapWithTryCatch(() => {
                     // If user server is receiving further requests during tracking another previous uncaught
@@ -202,6 +204,7 @@ class Djaty extends events_1.EventEmitter {
                     currCtx.djatyReqId = receivedReq.djatyReqId;
                     this.setContext(activeDomain, currCtx);
                     this.trackTimelineItem(activeDomain, receivedReq);
+                    // We must return the `next()` to support Koa
                     return next();
                 });
             });
@@ -229,6 +232,9 @@ class Djaty extends events_1.EventEmitter {
             // Handle Koa: We should set the status code of the response to handle the request properly.
             if (!res.headersSent)
                 res.statusCode = status;
+            if (!this.options.djatyIsTracking) {
+                return;
+            }
             // skip anything not marked as an internal server error
             if (status < 500) {
                 // Exiting stacked Domains to avoid leaking the context between server requests.
@@ -252,6 +258,9 @@ class Djaty extends events_1.EventEmitter {
                 this.trackConsoleError(domain.active, ['setUser(): Initiate Djaty first.']);
                 return this;
             }
+            if (!this.options.djatyIsTracking) {
+                return this;
+            }
             const trackedUser = { userId, logon };
             if (!this.isTrackedUserValidObj(domain.active, trackedUser)) {
                 return this;
@@ -272,6 +281,9 @@ class Djaty extends events_1.EventEmitter {
                         'Djaty first.']);
                 return this;
             }
+            if (!this.options.djatyIsTracking) {
+                return this;
+            }
             if (typeof cb !== 'function') {
                 this.trackConsoleError(domain.active, ['addBeforeSubmissionHandler(): Ensure "cb" ' +
                         'parameter is a function']);
@@ -290,6 +302,9 @@ class Djaty extends events_1.EventEmitter {
             if (!this.isInitiated) {
                 this.trackConsoleError(domain.active, ['addBeforeSubmissionContextHandler(): ' +
                         'Initiate Djaty first']);
+                return this;
+            }
+            if (!this.options.djatyIsTracking) {
                 return this;
             }
             if (typeof cb !== 'function') {
@@ -316,6 +331,9 @@ class Djaty extends events_1.EventEmitter {
                 this.trackConsoleError(domain.active, ['addGlobalCustomData(): Initiate Djaty first.']);
                 return this;
             }
+            if (!this.options.djatyIsTracking) {
+                return this;
+            }
             this.customDataList.push(data);
             return this;
         });
@@ -328,6 +346,9 @@ class Djaty extends events_1.EventEmitter {
         return this.wrapWithTryCatch(() => {
             if (!this.isInitiated) {
                 this.trackConsoleError(domain.active, ['addContextCustomData(): Initiate Djaty first']);
+                return this;
+            }
+            if (!this.options.djatyIsTracking) {
                 return this;
             }
             const currCtx = this.getContext(domain.active);
@@ -346,13 +367,16 @@ class Djaty extends events_1.EventEmitter {
         return new Promise((resolve, reject) => {
             this.djatyErrorsDomain.run(() => {
                 return this.wrapWithTryCatch(() => {
+                    if (!this.isInitiated) {
+                        reject(new utils.DjatyError(`trackBug(): Initiate Djaty first.`, utils.DjatyErrorCodes.NOT_INITIATED));
+                        return;
+                    }
+                    if (!this.options.djatyIsTracking) {
+                        return;
+                    }
                     if (activeDomain && !utils.isReqWrapDomain(activeDomain)) {
                         // A guard to prevent tracking errors inside a nested user domain.
                         utils.consoleAlertError('Nested Domain! Tracking disabled for current request.');
-                        return;
-                    }
-                    if (!this.isInitiated) {
-                        reject(new utils.DjatyError(`trackBug(): Initiate Djaty first.`, utils.DjatyErrorCodes.NOT_INITIATED));
                         return;
                     }
                     const currCtx = this.getContext(activeDomain);
@@ -393,8 +417,11 @@ class Djaty extends events_1.EventEmitter {
         return this.options.server.hostname;
     }
     trackTimelineItem(activeDomain, timelineItem) {
-        // Avoid capturing tracked items before instrumentation finishes.
+        // Avoid capturing tracked items before initialization finishes.
         if (!this.isInitiated) {
+            return;
+        }
+        if (!this.options.djatyIsTracking) {
             return;
         }
         timelineItem.timestamp = +new Date();
