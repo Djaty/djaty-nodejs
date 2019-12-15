@@ -112,13 +112,13 @@ class Djaty extends events_1.EventEmitter {
                 },
             });
             this.options = mergedOptions;
+            if (!this.options.djatyIsTracking) {
+                utils.consoleAlertError('`options.djatyIsTracking` is `false`. Bug tracking disabled!');
+            }
             if (process.env.DJATY_IS_TRACKING === 'false') {
                 utils
                     .consoleAlertError('`process.env.DJATY_IS_TRACKING` is `false`. Bug tracking disabled!');
-                return this;
-            }
-            if (!this.options.djatyIsTracking) {
-                utils.consoleAlertError('`options.djatyIsTracking` is `false`. Bug tracking disabled!');
+                this.options.djatyIsTracking = false;
             }
             if (!this.options.apiKey || !this.options.apiSecret) {
                 throw new utils.DjatyError('Project keys are missing. Bug tracking disabled!');
