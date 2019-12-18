@@ -2,8 +2,8 @@ import {AllowedWrappers} from './allowedWrappers';
 
 export interface UserTrackingOptions {
   // Default: {console: true, http: true}
-  // To control which timeline items should be tracked: Console, HTTP, ... or set it to false
-  // to track only exceptions. Default is to track `console` and `http` timeline items.
+  // To control which timeline items should be tracked: Console, HTTP, ...
+  // Default is to track `console` and `http` timeline items.
   allowedWrappers?: AllowedWrappers;
 
   // Default: true

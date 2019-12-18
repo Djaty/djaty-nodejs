@@ -185,16 +185,16 @@ class Djaty extends events_1.EventEmitter {
                 // We must return the `next()` to support Koa
                 return next();
             }
+            // If user server is receiving further requests during tracking another previous uncaught
+            // exception. To minimize entering this condition we need to handle the previous exception
+            // very quickly and also to set the `timeout` duration to a minimum value as possible.
+            if (this.options.exitOnUncaughtExceptions && this.isUncaughtExceptionCaught) {
+                // 502 so nginx, ELB, etc will try the request again with another working server.
+                res.sendStatus(502);
+                return;
+            }
             return this.wrap(() => {
-                return this.wrapWithTryCatch(() => {
-                    // If user server is receiving further requests during tracking another previous uncaught
-                    // exception. To minimize entering this condition we need to handle the previous exception
-                    // very quickly and also to set the `timeout` duration to a minimum value as possible.
-                    if (this.isUncaughtExceptionCaught) {
-                        // 502 so nginx, ELB, etc will try the request again with another working server.
-                        res.sendStatus(502);
-                        return;
-                    }
+                this.wrapWithTryCatch(() => {
                     // `!`: The domain here is active as it's created inside the `wrap()`.
                     const activeDomain = domain.active;
                     activeDomain.add(req);
@@ -204,9 +204,9 @@ class Djaty extends events_1.EventEmitter {
                     currCtx.djatyReqId = receivedReq.djatyReqId;
                     this.setContext(activeDomain, currCtx);
                     this.trackTimelineItem(activeDomain, receivedReq);
-                    // We must return the `next()` to support Koa
-                    return next();
                 });
+                // We must return the `next()` to support Koa
+                return next();
             });
         };
     }
