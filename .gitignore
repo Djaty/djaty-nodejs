@@ -3,3 +3,4 @@ npm-debug*.log
 logs/all-logs*.log
 /.idea
 /djaty-nodejs.iml
+.tokens

@@ -1,10 +1,10 @@
 {
   "name": "@djaty/djaty-nodejs",
-  "version": "1.0.9-beta",
+  "version": "0.0.0-development",
   "description": "Official Djaty SDK for NodeJS",
   "repository": {
     "type": "git",
-    "url": "git://github.com/Djaty/djaty-nodejs.git"
+    "url": "https://github.com/Djaty/djaty-nodejs.git"
   },
   "homepage": "https://djaty.com/docs/SDKs/nodeJs/index.html",
   "main": "dist/index.js",
@@ -12,7 +12,10 @@
   "scripts": {
     "clean": "rm -rf dist",
     "build": "npm run clean && tsc",
-    "test": "npm run build && mocha --reporter spec 'dist/**/*.spec.js'"
+    "test": "npm run build && mocha --reporter spec 'dist/**/*.spec.js'",
+    "commit": "git-cz",
+    "semantic-release": "dotenv -e .tokens -- semantic-release --no-ci",
+    "semantic-release:preview-only": "dotenv -e .tokens -- semantic-release --dry-run"
   },
   "engines": {
     "node": ">=6"
@@ -55,6 +58,13 @@
     "winston-transport": "4.2.0"
   },
   "devDependencies": {
+    "@commitlint/cli": "^8.2.0",
+    "@commitlint/config-conventional": "^8.2.0",
+    "@semantic-release/changelog": "^3.0.6",
+    "@semantic-release/commit-analyzer": "^6.3.3",
+    "@semantic-release/git": "^7.0.18",
+    "@semantic-release/npm": "^5.3.4",
+    "@semantic-release/release-notes-generator": "^7.3.5",
     "@types/ajv": "1.0.0",
     "@types/bluebird": "3.5.18",
     "@types/chai": "^3.4.34",
@@ -68,8 +78,14 @@
     "@types/winston": "2.3.9",
     "chai": "^3.5.0",
     "chai-http": "^3.0.0",
+    "commitizen": "^4.0.3",
+    "cz-conventional-changelog": "^3.0.2",
+    "dotenv-cli": "^3.1.0",
+    "husky": "^3.1.0",
+    "lint-staged": "^9.5.0",
     "mocha": "^3.1.2",
     "nock": "^10.0.2",
+    "semantic-release": "^15.13.31",
     "sinon": "^7.1.1",
     "ts-node": "^1.6.1",
     "tslint": "^5.16.0",
@@ -78,5 +94,10 @@
   },
   "bugs": {
     "url": "https://github.com/Djaty/djaty-nodejs/issues"
+  },
+  "config": {
+    "commitizen": {
+      "path": "./node_modules/cz-conventional-changelog"
+    }
   }
 }
