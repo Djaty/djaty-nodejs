@@ -2,11 +2,12 @@ import * as _ from 'lodash';
 
 import {AllowedCustomLoggers} from './customLogger/allowedCustomLoggers';
 import {DefaultStages, TAGS_LIMIT} from './config/validationDefaults';
+import {UserConfigOptions} from './interfaces/userConfigOptions';
 
 export const userConfigSchema = {
   type: 'object',
   additionalProperties: false,
-  properties: {
+  properties: <Record<keyof UserConfigOptions, any>> {
     apiKey: {
       type: 'string',
     },
@@ -21,6 +22,10 @@ export const userConfigSchema = {
     },
     exitOnUncaughtExceptions: {
       type: 'boolean',
+    },
+    submissionTimeout: {
+      type: 'integer',
+      minimum: 1000,
     },
     reportDjatyCrashes: {
       type: 'boolean',

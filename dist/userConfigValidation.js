@@ -22,6 +22,10 @@ exports.userConfigSchema = {
         exitOnUncaughtExceptions: {
             type: 'boolean',
         },
+        submissionTimeout: {
+            type: 'integer',
+            minimum: 1000,
+        },
         reportDjatyCrashes: {
             type: 'boolean',
         },
