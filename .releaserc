@@ -5,11 +5,5 @@
     "@semantic-release/changelog",
     "@semantic-release/npm",
     "@semantic-release/git"
-  ],
-  "branches": [
-    {
-     "name": "master",
-     "prerelease": "beta"
-    }
   ]
 }

@@ -6,7 +6,7 @@ export declare class CoreConfig {
     timelineMaxLimit: number;
     stacktraceDefaultMaxLimit: number;
     stacktraceMaxLimit: number;
-    exceptionTrackingTimeout: number;
+    submissionTimeout: number;
     djatyIsTracking: boolean;
     allowedWrappers: {
         console: boolean;

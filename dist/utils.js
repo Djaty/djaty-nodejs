@@ -89,7 +89,7 @@ function parseError(err, maxFramesNo) {
             .join('\n');
         firstFrame = frameList[1];
     }
-    const msg = name + ': ' + (err.message || '<no message>');
+    const msg = name + ': ' + (err.message || '[no message]');
     const firstFrameStr = constants_1.AGENT_ID + constants_1.EXCEPTION_TRACKER_NAME + msg + firstFrame;
     const hash = crypto.createHash('sha256').update(firstFrameStr, 'utf8').digest('hex');
     return {
@@ -126,7 +126,7 @@ function parseRequest(req) {
     //   koa: req.host
     //   node: req.headers.host
     //noinspection JSDeprecatedSymbols
-    const host = req.hostname || req.host || reqHeaders.host || '<no host>';
+    const host = req.hostname || req.host || reqHeaders.host || '[no host]';
     // protocol:
     //   node: <n/a>
     //   express, koa: req.protocol

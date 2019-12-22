@@ -20,4 +20,5 @@ export interface MergedConfigOptions {
   release?: string;
   stage?: string;
   onBeforeBugSubmission?: (data: AgentData, next: (data: AgentData) => void) => void;
+  submissionTimeout: number;
 }

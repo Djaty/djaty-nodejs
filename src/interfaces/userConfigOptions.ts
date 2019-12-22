@@ -42,4 +42,9 @@ export interface UserConfigOptions {
 
   // Force the process to exit when the sdk tracks an uncaught exception.
   exitOnUncaughtExceptions?: boolean;
+
+  // Skip bug report submission if it takes more than this value.
+  // This value should be small as possible as the server state at this duration may be inconsistent
+  // due to the exception thrown and it may go further with this state or even receive new requests.
+  submissionTimeout?: number;
 }

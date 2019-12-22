@@ -19,7 +19,7 @@ export class DjatyWinstonTransport extends Transport {
   silent: boolean;
 
   private name: boolean;
-  private levelMap: {[p: string]: string} = {};
+  private readonly levelMap: {[p: string]: string} = {};
   private djaty: DjatyInterface;
 
   constructor(options: DjatyWinstonTransportOptions) {

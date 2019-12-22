@@ -16,10 +16,11 @@ export class CoreConfig {
   // If user defines a value for stacktraceLimit higher than this value this value will be used.
   stacktraceMaxLimit = 100;
 
-  // This value should be small as possible as the server state at this duration is inconsistent
-  // and it may go further with this state or even receives new requests.
+  // Skip bug report submission if it takes more than this value.
+  // This value should be small as possible as the server state at this duration may be inconsistent
+  // due to the exception thrown and it may go further with this state or even receive new requests.
   // noinspection PointlessArithmeticExpressionJS
-  exceptionTrackingTimeout = 1 * 1000;
+  submissionTimeout = 1 * 1000;
 
   djatyIsTracking = true;
 

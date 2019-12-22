@@ -30,6 +30,7 @@ import {TrackedUserBase} from './interfaces/trackedUserBase';
 import {HttpTimelineItem} from './interfaces/httpTimelineItem';
 import {TimelineItemTypes} from './interfaces/timelineItemTypes';
 import {DjatyInterface} from './interfaces/djatyInterface';
+import {ServerConfig} from './interfaces/serverConfig';
 
 // tslint:disable-next-line no-require-imports
 const serverLocalIp = require('ip').address();
@@ -139,14 +140,15 @@ export class Djaty extends EventEmitter implements DjatyInterface {
           `Errors: ${ajv.errorsText()}`);
       }
 
-      const mergedOptions: MergedConfigOptions = _.defaultsDeep({}, userOptions, {
+      this.options = _.defaultsDeep({}, userOptions, <Partial<MergedConfigOptions>> {
         djatyIsTracking: this.coreConfig.djatyIsTracking,
         allowAutoSubmission: this.coreConfig.allowAutoSubmission,
         showDjatyLogs: false,
         reportDjatyCrashes: true,
         tags: [],
         exitOnUncaughtExceptions: true,
-        server: {
+        submissionTimeout: this.coreConfig.submissionTimeout,
+        server: <Partial<ServerConfig>> {
           hostname: this.coreConfig.hostname,
           apiPath: this.coreConfig.apiPath,
           secure: true,
@@ -159,8 +161,6 @@ export class Djaty extends EventEmitter implements DjatyInterface {
           parseUser: this.coreConfig.parseUser,
         },
       });
-
-      this.options = mergedOptions;
 
       if (!this.options.djatyIsTracking) {
         utils.consoleAlertError('`options.djatyIsTracking` is `false`. Bug tracking disabled!');
@@ -179,28 +179,28 @@ export class Djaty extends EventEmitter implements DjatyInterface {
 
       this.isInitiated = true;
 
-      this.globalCtx.tags = mergedOptions.tags;
-      this.globalCtx.stage = mergedOptions.stage;
+      this.globalCtx.tags = this.options.tags;
+      this.globalCtx.stage = this.options.stage;
 
       this.transport = new HTTPTransport({
-        server: mergedOptions.server,
-        proxy: mergedOptions.proxy ? Object.assign({secure: true}, mergedOptions.proxy) : undefined,
+        server: this.options.server,
+        proxy: this.options.proxy ? Object.assign({secure: true}, this.options.proxy) : undefined,
       });
 
-      this.initTrackingOptions(mergedOptions.trackingOptions);
+      this.initTrackingOptions(this.options.trackingOptions);
 
       // `disableDjatyDomainErrors`: is used for tests so don't expose in the options interface.
       if (!(<any>userOptions).disableDjatyDomainErrors) {
         this.djatyErrorsDomain.on('error', this.onDjatyDomainError.bind(this));
       }
 
-      if (mergedOptions.onBeforeBugSubmission) {
-        this.addBeforeSubmissionHandler(mergedOptions.onBeforeBugSubmission);
+      if (this.options.onBeforeBugSubmission) {
+        this.addBeforeSubmissionHandler(this.options.onBeforeBugSubmission);
       }
 
       this.registerExceptionHandler();
 
-      if (mergedOptions.trackingOptions.captureUnhandledRejections) {
+      if (this.options.trackingOptions.captureUnhandledRejections) {
         this.registerRejectionHandler();
       }
 
@@ -986,7 +986,7 @@ export class Djaty extends EventEmitter implements DjatyInterface {
 
       // `unref()`: Don't keep the process open! If there is no other activity keeping the event
       // loop running, let the process exit normally without waiting the callback to be invoked.
-    }, this.coreConfig.exceptionTrackingTimeout).unref();
+    }, this.options.submissionTimeout).unref();
 
     const exception = utils.parseError(djatyErr, this.maxStacktraceFramesNo);
     exception.timestamp = +new Date();
@@ -1153,7 +1153,7 @@ export class Djaty extends EventEmitter implements DjatyInterface {
 
           // `unref()`: Don't keep the process open! If there is no other activity keeping the event
           // loop running, let the process exit normally without waiting the callback to be invoked.
-        }, this.coreConfig.exceptionTrackingTimeout).unref();
+        }, this.options.submissionTimeout).unref();
 
         const exception = this.trackExceptionItem(err, activeDomain);
         const shortTitle = exception!.msg.substr(0, 255);

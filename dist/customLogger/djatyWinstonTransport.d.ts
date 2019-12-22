@@ -10,7 +10,7 @@ export declare type DjatyWinstonTransportOptions = Transport.TransportStreamOpti
 export declare class DjatyWinstonTransport extends Transport {
     silent: boolean;
     private name;
-    private levelMap;
+    private readonly levelMap;
     private djaty;
     constructor(options: DjatyWinstonTransportOptions);
     /**

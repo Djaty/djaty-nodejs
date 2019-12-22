@@ -17,4 +17,5 @@ export interface UserConfigOptions {
     allowAutoSubmission?: boolean;
     showDjatyLogs?: boolean;
     exitOnUncaughtExceptions?: boolean;
+    submissionTimeout?: number;
 }

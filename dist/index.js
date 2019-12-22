@@ -91,13 +91,14 @@ class Djaty extends events_1.EventEmitter {
                 throw new utils.DjatyError('Options are not valid. Bug tracking disabled! ' +
                     `Errors: ${ajv.errorsText()}`);
             }
-            const mergedOptions = _.defaultsDeep({}, userOptions, {
+            this.options = _.defaultsDeep({}, userOptions, {
                 djatyIsTracking: this.coreConfig.djatyIsTracking,
                 allowAutoSubmission: this.coreConfig.allowAutoSubmission,
                 showDjatyLogs: false,
                 reportDjatyCrashes: true,
                 tags: [],
                 exitOnUncaughtExceptions: true,
+                submissionTimeout: this.coreConfig.submissionTimeout,
                 server: {
                     hostname: this.coreConfig.hostname,
                     apiPath: this.coreConfig.apiPath,
@@ -111,7 +112,6 @@ class Djaty extends events_1.EventEmitter {
                     parseUser: this.coreConfig.parseUser,
                 },
             });
-            this.options = mergedOptions;
             if (!this.options.djatyIsTracking) {
                 utils.consoleAlertError('`options.djatyIsTracking` is `false`. Bug tracking disabled!');
             }
@@ -124,22 +124,22 @@ class Djaty extends events_1.EventEmitter {
                 throw new utils.DjatyError('Project keys are missing. Bug tracking disabled!');
             }
             this.isInitiated = true;
-            this.globalCtx.tags = mergedOptions.tags;
-            this.globalCtx.stage = mergedOptions.stage;
+            this.globalCtx.tags = this.options.tags;
+            this.globalCtx.stage = this.options.stage;
             this.transport = new transport_1.HTTPTransport({
-                server: mergedOptions.server,
-                proxy: mergedOptions.proxy ? Object.assign({ secure: true }, mergedOptions.proxy) : undefined,
+                server: this.options.server,
+                proxy: this.options.proxy ? Object.assign({ secure: true }, this.options.proxy) : undefined,
             });
-            this.initTrackingOptions(mergedOptions.trackingOptions);
+            this.initTrackingOptions(this.options.trackingOptions);
             // `disableDjatyDomainErrors`: is used for tests so don't expose in the options interface.
             if (!userOptions.disableDjatyDomainErrors) {
                 this.djatyErrorsDomain.on('error', this.onDjatyDomainError.bind(this));
             }
-            if (mergedOptions.onBeforeBugSubmission) {
-                this.addBeforeSubmissionHandler(mergedOptions.onBeforeBugSubmission);
+            if (this.options.onBeforeBugSubmission) {
+                this.addBeforeSubmissionHandler(this.options.onBeforeBugSubmission);
             }
             this.registerExceptionHandler();
-            if (mergedOptions.trackingOptions.captureUnhandledRejections) {
+            if (this.options.trackingOptions.captureUnhandledRejections) {
                 this.registerRejectionHandler();
             }
             return this;
@@ -735,7 +735,7 @@ class Djaty extends events_1.EventEmitter {
             cb(timeoutErr);
             // `unref()`: Don't keep the process open! If there is no other activity keeping the event
             // loop running, let the process exit normally without waiting the callback to be invoked.
-        }, this.coreConfig.exceptionTrackingTimeout).unref();
+        }, this.options.submissionTimeout).unref();
         const exception = utils.parseError(djatyErr, this.maxStacktraceFramesNo);
         exception.timestamp = +new Date();
         const shortTitle = exception.msg.substr(0, 255);
@@ -867,7 +867,7 @@ class Djaty extends events_1.EventEmitter {
                     this.onAfterErrorHandled();
                     // `unref()`: Don't keep the process open! If there is no other activity keeping the event
                     // loop running, let the process exit normally without waiting the callback to be invoked.
-                }, this.coreConfig.exceptionTrackingTimeout).unref();
+                }, this.options.submissionTimeout).unref();
                 const exception = this.trackExceptionItem(err, activeDomain);
                 const shortTitle = exception.msg.substr(0, 255);
                 const ctxArgs = {
