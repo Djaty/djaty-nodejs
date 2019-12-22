@@ -31,3 +31,7 @@ To use the NodeJS SDK inside Express and Koa based applications, please take a l
 
 ### Run tests
 `$ npm run test`
+
+### Hints
+- Using console log directly inside the SDK logic will add the concole timeline item
+to the active domain which will always be `djatyInternalErrorsDomain` and not the domain of the request `djatyReqWrapDomain` (Which the `req` and `res` objects are added to).

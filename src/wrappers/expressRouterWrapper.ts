@@ -20,12 +20,12 @@ const orgMethod = expressApp.handle;
 expressApp.handle = function (...args: any[]) {
   const activeDomain = domain.active;
 
-  if (activeDomain && activeDomain.__name === 'reqWrapDomain') {
+  if (activeDomain && activeDomain.__name === 'djatyReqWrapDomain') {
     return activeDomain.bind(orgMethod).apply(this, args);
   }
 
-  const reqWrapDomain = domain.create();
-  reqWrapDomain.__name = 'reqWrapDomain';
+  const djatyReqWrapDomain = domain.create();
+  djatyReqWrapDomain.__name = 'djatyReqWrapDomain';
 
-  return reqWrapDomain.bind(orgMethod).apply(this, args);
+  return djatyReqWrapDomain.bind(orgMethod).apply(this, args);
 };

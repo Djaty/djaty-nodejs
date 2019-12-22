@@ -114,9 +114,9 @@ export declare function formatConsoleItem(methodName: string, consoleParams: any
 /**
  * This method should be used as a guard to prevent tracking errors inside a nested domain.
  * Nested domains can be user or Djaty created domains:
- * - User created domains will ruin the context as part of it will be saved inside `reqWrapDomain`
+ * - User created domains 'll ruin the context as part of it 'll be saved at `djatyReqWrapDomain`
  *   and other part will be inside the user domain. So, we avoid creating a bug with this context.
- * - Djaty created domains like `djatyErrorsDomain` and `asyncLoopDomain` will not include
- *   the request context. So, we avoid creating a bug with this context too.
+ * - Djaty created domains like `djatyInternalErrorsDomain` and `djatyAsyncLoopDomain`
+ *   will not include the request context. So, we avoid creating a bug with this context too.
  */
-export declare function isReqWrapDomain(activeDomain: ActiveDomain): boolean;
+export declare function isDjatyReqWrapDomain(activeDomain: ActiveDomain): boolean;

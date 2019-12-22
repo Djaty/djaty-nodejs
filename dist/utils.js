@@ -214,40 +214,40 @@ exports.removeUrlParameter = removeUrlParameter;
  */
 function asyncLoop(funcArr, initArgs, ctx, doneCb) {
     let i = 0;
-    // Bind `doneCb()` to the active domain to prevent the side effect of the `asyncLoopDomain`
+    // Bind `doneCb()` to the active domain to prevent the side effect of the `djatyAsyncLoopDomain`
     // that may also leak its context to outer world if not `exit()`.
     // `!` as `asyncLoop()` is always being called within an active domain.
     const activeDomain = domain.active;
     const boundDoneCb = activeDomain.bind(doneCb);
-    const asyncLoopDomain = domain.create();
-    asyncLoopDomain.__name = 'asyncLoopDomain';
+    const djatyAsyncLoopDomain = domain.create();
+    djatyAsyncLoopDomain.__name = 'djatyAsyncLoopDomain';
     function next(...args) {
         if (i === funcArr.length) {
             // Docs: "it's important to ensure that the current domain is exited."
-            asyncLoopDomain.exit();
+            djatyAsyncLoopDomain.exit();
             boundDoneCb.apply(ctx, [undefined, ...args]);
             return;
         }
         funcArr[i++].apply(ctx, [...args, next]);
     }
-    const asyncLoopDomainOnError = (err) => {
+    const djatyAsyncLoopDomainOnError = (err) => {
         // Docs: "it's important to ensure that the current domain is exited."
-        asyncLoopDomain.exit();
+        djatyAsyncLoopDomain.exit();
         boundDoneCb.call(ctx, err);
     };
-    asyncLoopDomain.on('error', asyncLoopDomainOnError);
+    djatyAsyncLoopDomain.on('error', djatyAsyncLoopDomainOnError);
     // `try/catch` is a workaround. As domains internally depend on a special
     // `uncaughtException` event to catch errors, they don't catch sync errors that are swallowed
     // and not cause this special `uncaughtException` event to be emitted.
     // Check this issue: https://github.com/nodejs/node/issues/22400
     // So, we must use `try/catch` every time we use `domain.run()` as it always prevents
     // the error from being swallowed.
-    asyncLoopDomain.run(() => {
+    djatyAsyncLoopDomain.run(() => {
         try {
             next.apply(ctx, initArgs);
         }
         catch (err) {
-            asyncLoopDomainOnError(err);
+            djatyAsyncLoopDomainOnError(err);
         }
     });
 }
@@ -295,13 +295,13 @@ exports.formatConsoleItem = formatConsoleItem;
 /**
  * This method should be used as a guard to prevent tracking errors inside a nested domain.
  * Nested domains can be user or Djaty created domains:
- * - User created domains will ruin the context as part of it will be saved inside `reqWrapDomain`
+ * - User created domains 'll ruin the context as part of it 'll be saved at `djatyReqWrapDomain`
  *   and other part will be inside the user domain. So, we avoid creating a bug with this context.
- * - Djaty created domains like `djatyErrorsDomain` and `asyncLoopDomain` will not include
- *   the request context. So, we avoid creating a bug with this context too.
+ * - Djaty created domains like `djatyInternalErrorsDomain` and `djatyAsyncLoopDomain`
+ *   will not include the request context. So, we avoid creating a bug with this context too.
  */
-function isReqWrapDomain(activeDomain) {
-    return activeDomain.__name === 'reqWrapDomain';
+function isDjatyReqWrapDomain(activeDomain) {
+    return activeDomain.__name === 'djatyReqWrapDomain';
 }
-exports.isReqWrapDomain = isReqWrapDomain;
+exports.isDjatyReqWrapDomain = isDjatyReqWrapDomain;
 //# sourceMappingURL=utils.js.map

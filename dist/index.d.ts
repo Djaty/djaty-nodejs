@@ -26,7 +26,7 @@ export declare class Djaty extends EventEmitter implements DjatyInterface {
     private customDataList;
     private isUncaughtExceptionCaught;
     private isDjatyCrashExceptionCaught;
-    private djatyErrorsDomain;
+    private djatyInternalErrorsDomain;
     private static USER_CONFIG_SCHEMA;
     private isRequestHandlerInstalled;
     private constructor();
@@ -81,8 +81,8 @@ export declare class Djaty extends EventEmitter implements DjatyInterface {
     private getContext(activeDomain);
     /**
      * Use `this.trackConsoleError` and not `console.log` as `console.log` internally will add
-     * the timeline item to the active domain which is `this.djatyErrorsDomain` and not the current
-     * domain of the request (Which the `req` and `res` objects are added to).
+     * the timeline item to the active domain which is `this.djatyInternalErrorsDomain`
+     * and not the current domain of the request (Which the `req` and `res` objects are added to).
      *
      * @param activeDomain
      * @param {[]} consoleParams
@@ -90,8 +90,8 @@ export declare class Djaty extends EventEmitter implements DjatyInterface {
     private trackConsoleError(activeDomain, consoleParams);
     private onAfterErrorHandled();
     /**
-     * Use `this.trackStringErrorTimelineItem` and not `console.error` as `console.error`
-     * internally will add the timeline item to the active domain which is `this.djatyErrorsDomain`
+     * Use `this.trackStringErrorTimelineItem` and not `console.error` as `console.error` internally
+     * will add the timeline item to the active domain which is `this.djatyInternalErrorsDomain`
      * and not the current domain of the request (Which the `req` and `res` objects are added to).
      *
      * @param {ActiveDomain} activeDomain
@@ -135,6 +135,12 @@ export declare class Djaty extends EventEmitter implements DjatyInterface {
      * the error from being swallowed.
      */
     private wrapWithTryCatch(cb);
+    /**
+     * Exiting stacked Domains to avoid leaking the context between server requests.
+     * Ref: https://github.com/nodejs/node/issues/26081
+     * @TODO, find better solution
+     */
+    private exitStackedDomains();
 }
 export declare const djaty: DjatyInterface;
 export { UserConfigOptions } from './interfaces/userConfigOptions';

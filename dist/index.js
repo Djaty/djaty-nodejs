@@ -47,9 +47,9 @@ class Djaty extends events_1.EventEmitter {
         // accessible across all the HTTP requests. On errors, it will exit the process.
         // @TODO, we need to make this domain local to the request to enable us storing
         // a req-scoped timeline and submit a request to our tracking projects.
-        this.djatyErrorsDomain = domain.create();
+        this.djatyInternalErrorsDomain = domain.create();
         this.isRequestHandlerInstalled = false;
-        this.djatyErrorsDomain.__name = 'djatyErrorsDomain';
+        this.djatyInternalErrorsDomain.__name = 'djatyInternalErrorsDomain';
         ajv.addSchema(userConfigValidation_1.userConfigSchema, Djaty.USER_CONFIG_SCHEMA);
     }
     static getInstance(coreConfig) {
@@ -133,7 +133,7 @@ class Djaty extends events_1.EventEmitter {
             this.initTrackingOptions(this.options.trackingOptions);
             // `disableDjatyDomainErrors`: is used for tests so don't expose in the options interface.
             if (!userOptions.disableDjatyDomainErrors) {
-                this.djatyErrorsDomain.on('error', this.onDjatyDomainError.bind(this));
+                this.djatyInternalErrorsDomain.on('error', this.onDjatyDomainError.bind(this));
             }
             if (this.options.onBeforeBugSubmission) {
                 this.addBeforeSubmissionHandler(this.options.onBeforeBugSubmission);
@@ -165,7 +165,7 @@ class Djaty extends events_1.EventEmitter {
             trackingWrappers.restoreOriginals();
             process.removeAllListeners('uncaughtException');
             process.removeAllListeners('unhandledRejection');
-            this.djatyErrorsDomain.removeAllListeners('error');
+            this.djatyInternalErrorsDomain.removeAllListeners('error');
             return this;
         });
     }
@@ -237,15 +237,7 @@ class Djaty extends events_1.EventEmitter {
             }
             // skip anything not marked as an internal server error
             if (status < 500) {
-                // Exiting stacked Domains to avoid leaking the context between server requests.
-                // Ref: https://github.com/nodejs/node/issues/26081
-                // @TODO, find better solution
-                (domain._stack || []).forEach(stacked => {
-                    if (!['reqWrapDomain', 'asyncLoopDomain', 'djatyErrorsDomain'].includes(stacked.__name)) {
-                        return;
-                    }
-                    stacked.exit();
-                });
+                this.exitStackedDomains();
                 return;
             }
             this.captureError(err);
@@ -362,10 +354,10 @@ class Djaty extends events_1.EventEmitter {
     }
     //noinspection JSUnusedGlobalSymbols
     trackBug(bug) {
-        // Catching the request domain context before using the `djatyErrorsDomain`.
+        // Catching the request domain context before using the `djatyInternalErrorsDomain`.
         const activeDomain = domain.active;
         return new Promise((resolve, reject) => {
-            this.djatyErrorsDomain.run(() => {
+            this.djatyInternalErrorsDomain.run(() => {
                 return this.wrapWithTryCatch(() => {
                     if (!this.isInitiated) {
                         reject(new utils.DjatyError(`trackBug(): Initiate Djaty first.`, utils.DjatyErrorCodes.NOT_INITIATED));
@@ -374,7 +366,7 @@ class Djaty extends events_1.EventEmitter {
                     if (!this.options.djatyIsTracking) {
                         return;
                     }
-                    if (activeDomain && !utils.isReqWrapDomain(activeDomain)) {
+                    if (activeDomain && !utils.isDjatyReqWrapDomain(activeDomain)) {
                         // A guard to prevent tracking errors inside a nested user domain.
                         utils.consoleAlertError('Nested Domain! Tracking disabled for current request.');
                         return;
@@ -439,9 +431,9 @@ class Djaty extends events_1.EventEmitter {
         if (currCtx.timeline.length > this.maxTimelineItems - 1) {
             // On limiting timeline, keep the first item and trim starting from the next items (If the
             // domain is active as this indicates a request and the first item will be an httpReq item
-            // that we should keep. But if the active domain is undefined or not `__reqWrapDomain`,
+            // that we should keep. But if the active domain is undefined or not `djatyReqWrapDomain`,
             // the first timeline item could be anything else.
-            const httpReqItem = activeDomain && activeDomain.__name === 'reqWrapDomain' ?
+            const httpReqItem = activeDomain && activeDomain.__name === 'djatyReqWrapDomain' ?
                 currCtx.timeline.shift() : undefined;
             const trimmingItem = { timestamp: +new Date(), itemType: timelineItemTypes_1.TimelineItemTypes.TRIMMING };
             currCtx.trimmedItems = httpReqItem ? [httpReqItem, trimmingItem] : [trimmingItem];
@@ -550,7 +542,7 @@ class Djaty extends events_1.EventEmitter {
         if (!activeDomain) {
             return this.globalCtx;
         }
-        if (!utils.isReqWrapDomain(activeDomain)) {
+        if (!utils.isDjatyReqWrapDomain(activeDomain)) {
             // A guard to prevent tracking errors inside a nested domain.
             return {};
         }
@@ -561,8 +553,8 @@ class Djaty extends events_1.EventEmitter {
     }
     /**
      * Use `this.trackConsoleError` and not `console.log` as `console.log` internally will add
-     * the timeline item to the active domain which is `this.djatyErrorsDomain` and not the current
-     * domain of the request (Which the `req` and `res` objects are added to).
+     * the timeline item to the active domain which is `this.djatyInternalErrorsDomain`
+     * and not the current domain of the request (Which the `req` and `res` objects are added to).
      *
      * @param activeDomain
      * @param {[]} consoleParams
@@ -572,15 +564,7 @@ class Djaty extends events_1.EventEmitter {
         this.trackStringErrorTimelineItem(activeDomain, consoleParams);
     }
     onAfterErrorHandled() {
-        // Exiting stacked Domains to avoid leaking the context between server requests.
-        // Ref: https://github.com/nodejs/node/issues/26081
-        // @TODO, find better solution
-        (domain._stack || []).forEach(stacked => {
-            if (!['reqWrapDomain', 'asyncLoopDomain', 'djatyErrorsDomain'].includes(stacked.__name)) {
-                return;
-            }
-            stacked.exit();
-        });
+        this.exitStackedDomains();
         if (!this.options.exitOnUncaughtExceptions) {
             return;
         }
@@ -588,8 +572,8 @@ class Djaty extends events_1.EventEmitter {
         process.exit(1);
     }
     /**
-     * Use `this.trackStringErrorTimelineItem` and not `console.error` as `console.error`
-     * internally will add the timeline item to the active domain which is `this.djatyErrorsDomain`
+     * Use `this.trackStringErrorTimelineItem` and not `console.error` as `console.error` internally
+     * will add the timeline item to the active domain which is `this.djatyInternalErrorsDomain`
      * and not the current domain of the request (Which the `req` and `res` objects are added to).
      *
      * @param {ActiveDomain} activeDomain
@@ -676,7 +660,7 @@ class Djaty extends events_1.EventEmitter {
         const customData = [...this.customDataList, ...customDataContextList];
         const { trackingOptions, allowAutoSubmission, release, apiSecret, apiKey } = this.options;
         let reqCurrUser = {};
-        if (activeDomain && activeDomain.__name === 'reqWrapDomain') {
+        if (activeDomain && activeDomain.__name === 'djatyReqWrapDomain') {
             reqCurrUser = this.getUserFromReq(activeDomain, trackingOptions.parseUser);
         }
         const user = Object.assign({}, ctxArgs.user, reqCurrUser, currCtx.user);
@@ -808,7 +792,7 @@ class Djaty extends events_1.EventEmitter {
             this.globalCtx = ctx;
             return;
         }
-        if (!utils.isReqWrapDomain(activeDomain)) {
+        if (!utils.isDjatyReqWrapDomain(activeDomain)) {
             // A guard to prevent tracking errors inside a nested domain.
             return;
         }
@@ -819,7 +803,7 @@ class Djaty extends events_1.EventEmitter {
         currCtx.isTimelineTrimmed = false;
         const firstItem = currCtx.timeline[0];
         const trimmingItem = { timestamp: +new Date(), itemType: timelineItemTypes_1.TimelineItemTypes.TRIMMING };
-        if (!firstItem || !activeDomain || activeDomain.__name !== 'reqWrapDomain' ||
+        if (!firstItem || !activeDomain || activeDomain.__name !== 'djatyReqWrapDomain' ||
             firstItem.itemType !== timelineItemTypes_1.TimelineItemTypes.HTTP_REQ ||
             !firstItem.djatyReqId) {
             currCtx.timeline = [trimmingItem];
@@ -836,15 +820,15 @@ class Djaty extends events_1.EventEmitter {
      * @param errType
      */
     captureError(err, errType = 'uncaughtException') {
-        // Catching the request domain context before using the `djatyErrorsDomain`.
+        // Catching the request domain context before using the `djatyInternalErrorsDomain`.
         const activeDomain = domain.active;
-        if (activeDomain && !utils.isReqWrapDomain(activeDomain)) {
+        if (activeDomain && !utils.isDjatyReqWrapDomain(activeDomain)) {
             // A guard to prevent tracking errors inside a nested user domain.
             utils.consoleAlertError('Nested Domain! Tracking disabled for current request.');
             this.onAfterErrorHandled();
             return;
         }
-        this.djatyErrorsDomain.run(() => {
+        this.djatyInternalErrorsDomain.run(() => {
             return this.wrapWithTryCatch(() => {
                 // To exclude Djaty validation installation exceptions
                 if (err instanceof utils.DjatyError) {
@@ -949,12 +933,12 @@ class Djaty extends events_1.EventEmitter {
         return exception;
     }
     wrap(func) {
-        let reqWrapDomain = domain.active;
-        if (!reqWrapDomain || reqWrapDomain.__name !== 'reqWrapDomain') {
-            reqWrapDomain = domain.create();
-            reqWrapDomain.__name = 'reqWrapDomain';
+        let djatyReqWrapDomain = domain.active;
+        if (!djatyReqWrapDomain || djatyReqWrapDomain.__name !== 'djatyReqWrapDomain') {
+            djatyReqWrapDomain = domain.create();
+            djatyReqWrapDomain.__name = 'djatyReqWrapDomain';
         }
-        reqWrapDomain.on('error', this.captureError.bind(this));
+        djatyReqWrapDomain.on('error', this.captureError.bind(this));
         // `try/catch` is a workaround. As domains internally depend on a special
         // `uncaughtException` event to catch errors, they don't catch sync errors that are swallowed
         // and not cause this special `uncaughtException` event to be emitted.
@@ -962,7 +946,7 @@ class Djaty extends events_1.EventEmitter {
         // So, we must use `try/catch` every time we use `domain.run()` as it always prevents
         // the error from being swallowed.
         // `run()` sets the domain.active
-        return reqWrapDomain.run(() => {
+        return djatyReqWrapDomain.run(() => {
             try {
                 return func.call(this);
             }
@@ -1055,6 +1039,20 @@ class Djaty extends events_1.EventEmitter {
             }
             this.onDjatyDomainError(err);
         }
+    }
+    /**
+     * Exiting stacked Domains to avoid leaking the context between server requests.
+     * Ref: https://github.com/nodejs/node/issues/26081
+     * @TODO, find better solution
+     */
+    exitStackedDomains() {
+        const domainList = ['djatyReqWrapDomain', 'djatyAsyncLoopDomain', 'djatyInternalErrorsDomain'];
+        (domain._stack || []).forEach(stacked => {
+            if (!domainList.includes(stacked.__name)) {
+                return;
+            }
+            stacked.exit();
+        });
     }
 }
 Djaty.DJATY_NOT_VALID_API_KEY = 'djaty_isApiKeyValid';
