@@ -1,3 +1,10 @@
+## [1.1.1](https://github.com/Djaty/djaty-nodejs/compare/v1.1.0...v1.1.1) (2019-12-22)
+
+
+### Bug Fixes
+
+* nodejs domain names ([dd19e5a](https://github.com/Djaty/djaty-nodejs/commit/dd19e5a59bfeeb96358a139a3c2688aa950ec2d0))
+
 # [1.1.0](https://github.com/Djaty/djaty-nodejs/compare/v1.0.1...v1.1.0) (2019-12-22)
 
 
