@@ -1,6 +1,6 @@
 {
   "name": "@djaty/djaty-nodejs",
-  "version": "0.0.0-development",
+  "version": "1.0.1",
   "description": "Official Djaty SDK for NodeJS",
   "repository": {
     "type": "git",
