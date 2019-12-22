@@ -509,7 +509,7 @@ class Djaty extends events_1.EventEmitter {
         // Errors that we cannot submit any more
         const ServerErrNoRetryMap = {
             [Djaty.DJATY_NOT_VALID_API_KEY]: '`apiKey` or `apiSecret` is invalid',
-            [transport_1.HTTPTransport.DJATY_NOT_SUPPORTED_REDIRECTION]: 'Redirections are not supported!',
+            [transport_1.HTTPTransport.DJATY_NOT_SUPPORTED_REDIRECTION]: 'Redirection is not supported!',
             EPROTO: 'Please make sure that the connection to the proxy and Djaty servers are both the ' +
                 'same, secured or not. Mixed state will never work!',
             UNABLE_TO_VERIFY_LEAF_SIGNATURE: 'Current connection to Djaty is secured ' +
