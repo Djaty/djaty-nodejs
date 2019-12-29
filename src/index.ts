@@ -179,6 +179,10 @@ export class Djaty extends EventEmitter implements DjatyInterface {
 
       this.isInitiated = true;
 
+      if (!this.options.djatyIsTracking) {
+        return this;
+      }
+
       this.globalCtx.tags = this.options.tags;
       this.globalCtx.stage = this.options.stage;
 
@@ -555,10 +559,6 @@ export class Djaty extends EventEmitter implements DjatyInterface {
   trackTimelineItem(activeDomain: ActiveDomain | undefined, timelineItem: TimelineItemUnion) {
     // Avoid capturing tracked items before initialization finishes.
     if (!this.isInitiated) {
-      return;
-    }
-
-    if (!this.options.djatyIsTracking) {
       return;
     }
 

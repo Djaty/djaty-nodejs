@@ -124,6 +124,9 @@ class Djaty extends events_1.EventEmitter {
                 throw new utils.DjatyError('Project keys are missing. Bug tracking disabled!');
             }
             this.isInitiated = true;
+            if (!this.options.djatyIsTracking) {
+                return this;
+            }
             this.globalCtx.tags = this.options.tags;
             this.globalCtx.stage = this.options.stage;
             this.transport = new transport_1.HTTPTransport({
@@ -411,9 +414,6 @@ class Djaty extends events_1.EventEmitter {
     trackTimelineItem(activeDomain, timelineItem) {
         // Avoid capturing tracked items before initialization finishes.
         if (!this.isInitiated) {
-            return;
-        }
-        if (!this.options.djatyIsTracking) {
             return;
         }
         timelineItem.timestamp = +new Date();
