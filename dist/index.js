@@ -369,17 +369,20 @@ class Djaty extends events_1.EventEmitter {
                         return;
                     }
                     if (!this.options.djatyIsTracking) {
+                        resolve(submissionAcknowledge_1.SubmissionAcknowledge.SKIPPED_DJATY_TRACKING_DISABLED);
                         return;
                     }
                     if (activeDomain && !utils.isDjatyReqWrapDomain(activeDomain)) {
                         // A guard to prevent tracking errors inside a nested user domain.
                         utils.consoleAlertError('Nested Domain! Tracking disabled for current request.');
+                        resolve(submissionAcknowledge_1.SubmissionAcknowledge.SKIPPED_NESTED_USER_DOMAIN);
                         return;
                     }
                     const currCtx = this.getContext(activeDomain);
                     if (!this.options.allowAutoSubmission && !currCtx.djatyReqId) {
                         // Only log not reject as this crash will bubble up and crash the customer process
                         utils.consoleAlert('trackBug(): `options.allowAutoSubmission` is disabled.', djatyErrorCodes_1.DjatyErrorCodes.NO_DJATY_REQ_ID_FOR_TEMP_BUG);
+                        resolve(submissionAcknowledge_1.SubmissionAcknowledge.SKIPPED_DJATY_EXTENSION_NOT_DETECTED);
                         return;
                     }
                     // noinspection SuspiciousTypeOfGuard

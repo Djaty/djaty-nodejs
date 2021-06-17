@@ -500,12 +500,14 @@ export class Djaty extends EventEmitter implements DjatyInterface {
           }
 
           if (!this.options.djatyIsTracking) {
+            resolve(SubmissionAcknowledge.SKIPPED_DJATY_TRACKING_DISABLED);
             return;
           }
 
           if (activeDomain && !utils.isDjatyReqWrapDomain(activeDomain)) {
             // A guard to prevent tracking errors inside a nested user domain.
             utils.consoleAlertError('Nested Domain! Tracking disabled for current request.');
+            resolve(SubmissionAcknowledge.SKIPPED_NESTED_USER_DOMAIN);
             return;
           }
 
@@ -515,6 +517,7 @@ export class Djaty extends EventEmitter implements DjatyInterface {
             utils.consoleAlert('trackBug(): `options.allowAutoSubmission` is disabled.',
               DjatyErrorCodes.NO_DJATY_REQ_ID_FOR_TEMP_BUG);
 
+            resolve(SubmissionAcknowledge.SKIPPED_DJATY_EXTENSION_NOT_DETECTED);
             return;
           }
 
