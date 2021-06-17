@@ -6,6 +6,7 @@ import { ExceptionTimelineItem } from './interfaces/exceptionTimelineItem';
 import { HttpTimelineItem } from './interfaces/httpTimelineItem';
 import { ActiveDomain } from './interfaces/activeDomain';
 import { ConsoleTimelineItem } from './interfaces/consoleTimelineItem';
+import { DjatyErrorCodes } from './consts/djatyErrorCodes';
 export declare function disableConsoleAlerts(): void;
 export declare function enableConsoleAlerts(): void;
 /**
@@ -39,20 +40,9 @@ export declare class RequestError extends Error {
     reqBody: any;
     code?: string;
 }
-export declare enum ProcessAcknowledge {
-    USER_FILTER_ERROR = 0,
-    DJATY_CRASH_REPORT_SENT = 1,
-    BUG_REPORTED = 2,
-    FRONTEND_LINKING_TEMP_BUG_REPORTED = 3,
-    DJATY_CRASH_REPORT_DISABLED = 4,
-}
 export declare class DjatyError extends Error {
     code?: string;
     constructor(message: string, code?: DjatyErrorCodes);
-}
-export declare enum DjatyErrorCodes {
-    NOT_INITIATED = "NOT_INITIATED",
-    NO_DJATY_REQ_ID_FOR_TEMP_BUG = "NO_DJATY_REQ_ID_FOR_TEMP_BUG",
 }
 export declare function parseError(err: Error, maxFramesNo: number): ExceptionTimelineItem;
 export declare function getReqIP(req: (Express.Request | Koa.Request) & {

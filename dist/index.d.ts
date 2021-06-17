@@ -146,3 +146,4 @@ export declare const djaty: DjatyInterface;
 export { UserConfigOptions } from './interfaces/userConfigOptions';
 export { AllowedCustomLoggers } from './customLogger/allowedCustomLoggers';
 export { DefaultStages } from './config/validationDefaults';
+export { SubmissionAcknowledge } from './consts/submissionAcknowledge';

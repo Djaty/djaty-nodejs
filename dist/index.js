@@ -14,6 +14,8 @@ const constants_1 = require("./consts/constants");
 const logMessages_1 = require("./consts/logMessages");
 const userConfigValidation_1 = require("./userConfigValidation");
 const timelineItemTypes_1 = require("./interfaces/timelineItemTypes");
+const submissionAcknowledge_1 = require("./consts/submissionAcknowledge");
+const djatyErrorCodes_1 = require("./consts/djatyErrorCodes");
 // tslint:disable-next-line no-require-imports
 const serverLocalIp = require('ip').address();
 // tslint:disable-next-line no-require-imports
@@ -363,7 +365,7 @@ class Djaty extends events_1.EventEmitter {
             this.djatyInternalErrorsDomain.run(() => {
                 return this.wrapWithTryCatch(() => {
                     if (!this.isInitiated) {
-                        reject(new utils.DjatyError(`trackBug(): Initiate Djaty first.`, utils.DjatyErrorCodes.NOT_INITIATED));
+                        reject(new utils.DjatyError(`trackBug(): Initiate Djaty first.`, djatyErrorCodes_1.DjatyErrorCodes.NOT_INITIATED));
                         return;
                     }
                     if (!this.options.djatyIsTracking) {
@@ -376,7 +378,8 @@ class Djaty extends events_1.EventEmitter {
                     }
                     const currCtx = this.getContext(activeDomain);
                     if (!this.options.allowAutoSubmission && !currCtx.djatyReqId) {
-                        reject(new utils.DjatyError('trackBug(): `options.allowAutoSubmission` is disabled.', utils.DjatyErrorCodes.NO_DJATY_REQ_ID_FOR_TEMP_BUG));
+                        // Only log not reject as this crash will bubble up and crash the customer process
+                        utils.consoleAlert('trackBug(): `options.allowAutoSubmission` is disabled.', djatyErrorCodes_1.DjatyErrorCodes.NO_DJATY_REQ_ID_FOR_TEMP_BUG);
                         return;
                     }
                     // noinspection SuspiciousTypeOfGuard
@@ -451,7 +454,7 @@ class Djaty extends events_1.EventEmitter {
             return this.wrapWithTryCatch(() => {
                 this.process(activeDomain, agentData, (processErr, ack) => {
                     if (!this.options.allowAutoSubmission) {
-                        resolve(utils.ProcessAcknowledge.FRONTEND_LINKING_TEMP_BUG_REPORTED);
+                        resolve(submissionAcknowledge_1.SubmissionAcknowledge.FRONTEND_LINKING_TEMP_BUG_REPORTED);
                         return;
                     }
                     // Submission failed
@@ -467,26 +470,26 @@ class Djaty extends events_1.EventEmitter {
                         return;
                     }
                     // Submission done successfully
-                    if (ack === utils.ProcessAcknowledge.USER_FILTER_ERROR) {
+                    if (ack === submissionAcknowledge_1.SubmissionAcknowledge.USER_FILTER_ERROR) {
                         utils.consoleAlert('Djaty.onBeforeSubmission() is not configured properly. ' +
                             'A detailed bug reported.');
-                        resolve(utils.ProcessAcknowledge.USER_FILTER_ERROR);
+                        resolve(submissionAcknowledge_1.SubmissionAcknowledge.USER_FILTER_ERROR);
                         return;
                     }
-                    if (ack === utils.ProcessAcknowledge.DJATY_CRASH_REPORT_SENT) {
+                    if (ack === submissionAcknowledge_1.SubmissionAcknowledge.DJATY_CRASH_REPORT_SENT) {
                         utils.consoleAlert('Djaty crash report submitted successfully.');
-                        resolve(utils.ProcessAcknowledge.DJATY_CRASH_REPORT_SENT);
+                        resolve(submissionAcknowledge_1.SubmissionAcknowledge.DJATY_CRASH_REPORT_SENT);
                         return;
                     }
-                    if (ack === utils.ProcessAcknowledge.DJATY_CRASH_REPORT_DISABLED) {
+                    if (ack === submissionAcknowledge_1.SubmissionAcknowledge.DJATY_CRASH_REPORT_DISABLED) {
                         utils.consoleAlert('Djaty has encountered a problem and the crash report cannot be' +
                             ' sent. For a better experience and to help us fix those kinds of problems in the' +
                             ' future, please enable \'reportDjatyCrashes\' option.');
-                        resolve(utils.ProcessAcknowledge.DJATY_CRASH_REPORT_DISABLED);
+                        resolve(submissionAcknowledge_1.SubmissionAcknowledge.DJATY_CRASH_REPORT_DISABLED);
                         return;
                     }
                     utils.consoleAlert('Bug reported:', bug);
-                    resolve(utils.ProcessAcknowledge.BUG_REPORTED);
+                    resolve(submissionAcknowledge_1.SubmissionAcknowledge.BUG_REPORTED);
                 });
             });
         });
@@ -606,7 +609,7 @@ class Djaty extends events_1.EventEmitter {
                 this.onAfterErrorHandled();
                 return;
             }
-            if (ack === utils.ProcessAcknowledge.DJATY_CRASH_REPORT_DISABLED) {
+            if (ack === submissionAcknowledge_1.SubmissionAcknowledge.DJATY_CRASH_REPORT_DISABLED) {
                 utils.consoleAlert('Djaty has encountered a problem and the crash report cannot be' +
                     ' sent. For a better experience and to help us fix those kinds of problems in the' +
                     ' future, please enable \'reportDjatyCrashes\' option.');
@@ -697,7 +700,7 @@ class Djaty extends events_1.EventEmitter {
     submitDjatyCrashReport(djatyErr, cb) {
         utils.djatyDebug('Djaty.submitDjatyCrashReport()', djatyErr);
         if (!this.options.reportDjatyCrashes) {
-            cb(undefined, utils.ProcessAcknowledge.DJATY_CRASH_REPORT_DISABLED);
+            cb(undefined, submissionAcknowledge_1.SubmissionAcknowledge.DJATY_CRASH_REPORT_DISABLED);
             return;
         }
         if (this.options.exitOnUncaughtExceptions) {
@@ -748,7 +751,7 @@ class Djaty extends events_1.EventEmitter {
                 return;
             }
             isSent = true;
-            cb(undefined, utils.ProcessAcknowledge.DJATY_CRASH_REPORT_SENT);
+            cb(undefined, submissionAcknowledge_1.SubmissionAcknowledge.DJATY_CRASH_REPORT_SENT);
         });
     }
     initTrackingOptions(trackingOpts) {
@@ -880,18 +883,18 @@ class Djaty extends events_1.EventEmitter {
                         return;
                     }
                     // Submission done successfully
-                    if (ack === utils.ProcessAcknowledge.USER_FILTER_ERROR) {
+                    if (ack === submissionAcknowledge_1.SubmissionAcknowledge.USER_FILTER_ERROR) {
                         utils.consoleAlert('Djaty.onBeforeSubmission() is not configured properly. ' +
                             'A detailed bug reported.');
                         this.onAfterErrorHandled();
                         return;
                     }
-                    if (ack === utils.ProcessAcknowledge.DJATY_CRASH_REPORT_SENT) {
+                    if (ack === submissionAcknowledge_1.SubmissionAcknowledge.DJATY_CRASH_REPORT_SENT) {
                         utils.consoleAlert('Djaty crash report submitted successfully.');
                         this.onAfterErrorHandled();
                         return;
                     }
-                    if (ack === utils.ProcessAcknowledge.DJATY_CRASH_REPORT_DISABLED) {
+                    if (ack === submissionAcknowledge_1.SubmissionAcknowledge.DJATY_CRASH_REPORT_DISABLED) {
                         utils.consoleAlert('Djaty has encountered a problem and the crash report cannot be' +
                             ' sent. For a better experience and to help us fix those kinds of problems in the' +
                             ' future, please enable \'reportDjatyCrashes\' option.');
@@ -908,7 +911,7 @@ class Djaty extends events_1.EventEmitter {
         const agentData = this.prepareSubmissionPayload(activeDomain, ctxArgs);
         this.transport.send({ data: agentData }, sendErr => {
             if (!sendErr) {
-                cb(undefined, utils.ProcessAcknowledge.USER_FILTER_ERROR);
+                cb(undefined, submissionAcknowledge_1.SubmissionAcknowledge.USER_FILTER_ERROR);
                 return;
             }
             utils.djatyDebug('Djaty.sendUserFilterError()', 'The current validation schema for Djaty ' +
@@ -1064,4 +1067,6 @@ var allowedCustomLoggers_1 = require("./customLogger/allowedCustomLoggers");
 exports.AllowedCustomLoggers = allowedCustomLoggers_1.AllowedCustomLoggers;
 var validationDefaults_1 = require("./config/validationDefaults");
 exports.DefaultStages = validationDefaults_1.DefaultStages;
+var submissionAcknowledge_2 = require("./consts/submissionAcknowledge");
+exports.SubmissionAcknowledge = submissionAcknowledge_2.SubmissionAcknowledge;
 //# sourceMappingURL=index.js.map

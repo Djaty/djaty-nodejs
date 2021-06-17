@@ -13,6 +13,7 @@ import {HttpTimelineItem} from './interfaces/httpTimelineItem';
 import {ActiveDomain} from './interfaces/activeDomain';
 import {TimelineItemTypes} from './interfaces/timelineItemTypes';
 import {ConsoleTimelineItem} from './interfaces/consoleTimelineItem';
+import {DjatyErrorCodes} from './consts/djatyErrorCodes';
 
 // tslint:disable-next-line no-require-imports
 const domain = <DjatyDomain> require('domain');
@@ -75,14 +76,6 @@ export class RequestError extends Error {
   code?: string;
 }
 
-export enum ProcessAcknowledge {
-  USER_FILTER_ERROR,
-  DJATY_CRASH_REPORT_SENT,
-  BUG_REPORTED,
-  FRONTEND_LINKING_TEMP_BUG_REPORTED,
-  DJATY_CRASH_REPORT_DISABLED,
-}
-
 export class DjatyError extends Error {
   code?: string;
 
@@ -90,11 +83,6 @@ export class DjatyError extends Error {
     super(message);
     this.code = code;
   }
-}
-
-export enum DjatyErrorCodes {
-  NOT_INITIATED = 'NOT_INITIATED',
-  NO_DJATY_REQ_ID_FOR_TEMP_BUG = 'NO_DJATY_REQ_ID_FOR_TEMP_BUG',
 }
 
 export function parseError(err: Error, maxFramesNo: number) {

@@ -57,14 +57,6 @@ exports.consoleAlertOnce = consoleAlertOnce;
 class RequestError extends Error {
 }
 exports.RequestError = RequestError;
-var ProcessAcknowledge;
-(function (ProcessAcknowledge) {
-    ProcessAcknowledge[ProcessAcknowledge["USER_FILTER_ERROR"] = 0] = "USER_FILTER_ERROR";
-    ProcessAcknowledge[ProcessAcknowledge["DJATY_CRASH_REPORT_SENT"] = 1] = "DJATY_CRASH_REPORT_SENT";
-    ProcessAcknowledge[ProcessAcknowledge["BUG_REPORTED"] = 2] = "BUG_REPORTED";
-    ProcessAcknowledge[ProcessAcknowledge["FRONTEND_LINKING_TEMP_BUG_REPORTED"] = 3] = "FRONTEND_LINKING_TEMP_BUG_REPORTED";
-    ProcessAcknowledge[ProcessAcknowledge["DJATY_CRASH_REPORT_DISABLED"] = 4] = "DJATY_CRASH_REPORT_DISABLED";
-})(ProcessAcknowledge = exports.ProcessAcknowledge || (exports.ProcessAcknowledge = {}));
 class DjatyError extends Error {
     constructor(message, code) {
         super(message);
@@ -72,11 +64,6 @@ class DjatyError extends Error {
     }
 }
 exports.DjatyError = DjatyError;
-var DjatyErrorCodes;
-(function (DjatyErrorCodes) {
-    DjatyErrorCodes["NOT_INITIATED"] = "NOT_INITIATED";
-    DjatyErrorCodes["NO_DJATY_REQ_ID_FOR_TEMP_BUG"] = "NO_DJATY_REQ_ID_FOR_TEMP_BUG";
-})(DjatyErrorCodes = exports.DjatyErrorCodes || (exports.DjatyErrorCodes = {}));
 function parseError(err, maxFramesNo) {
     const name = err.name + '';
     let stack = '';

@@ -8,6 +8,7 @@ import * as nock from 'nock';
 import {djaty, UserConfigOptions} from '../';
 import {DjatyInterface} from '../interfaces/djatyInterface';
 import * as utils from '../utils';
+import {DjatyErrorCodes} from '../consts/djatyErrorCodes';
 
 const sdkOptions = <UserConfigOptions> {
   apiKey: 'xxxx-xxxx-xxxx-xxxx',
@@ -123,7 +124,7 @@ describe('djaty.trackBug()', () => {
 
   it('should throw `NOT_INITIATED` Error if djaty is not initiated to Djaty server', () => {
     return sdk.trackBug(new Error('Test bug!!!')).catch((err: utils.DjatyError) => {
-      if (err.code !== utils.DjatyErrorCodes.NOT_INITIATED) {
+      if (err.code !== DjatyErrorCodes.NOT_INITIATED) {
         throw err;
       }
     });
@@ -138,7 +139,7 @@ describe('djaty.trackBug()', () => {
 
     return sdk.init(sdkMergedOpts).trackBug(new Error('Test bug!!!'))
       .catch((err: utils.DjatyError) => {
-        if (err.code !== utils.DjatyErrorCodes.NO_DJATY_REQ_ID_FOR_TEMP_BUG) {
+        if (err.code !== DjatyErrorCodes.NO_DJATY_REQ_ID_FOR_TEMP_BUG) {
           throw err;
         }
       });

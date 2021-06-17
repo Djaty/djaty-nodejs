@@ -1,5 +1,6 @@
-import {RequestError, ProcessAcknowledge} from '../utils';
+import {RequestError} from '../utils';
+import {SubmissionAcknowledge} from '../consts/submissionAcknowledge';
 
 export interface ProcessCallback {
-  (err?: Error | RequestError | undefined, acknowledge?: ProcessAcknowledge): void;
+  (err?: Error | RequestError | undefined, acknowledge?: SubmissionAcknowledge): void;
 }

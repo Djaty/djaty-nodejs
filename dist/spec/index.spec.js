@@ -15,6 +15,7 @@ const nock = require("nock");
 // const sinon = require('sinon');
 const _1 = require("../");
 const utils = require("../utils");
+const djatyErrorCodes_1 = require("../consts/djatyErrorCodes");
 const sdkOptions = {
     apiKey: 'xxxx-xxxx-xxxx-xxxx',
     apiSecret: 'xxxx-xxxx-xxxx-xxxx',
@@ -102,7 +103,7 @@ describe('djaty.trackBug()', () => {
     }));
     it('should throw `NOT_INITIATED` Error if djaty is not initiated to Djaty server', () => {
         return sdk.trackBug(new Error('Test bug!!!')).catch((err) => {
-            if (err.code !== utils.DjatyErrorCodes.NOT_INITIATED) {
+            if (err.code !== djatyErrorCodes_1.DjatyErrorCodes.NOT_INITIATED) {
                 throw err;
             }
         });
@@ -114,7 +115,7 @@ describe('djaty.trackBug()', () => {
         });
         return sdk.init(sdkMergedOpts).trackBug(new Error('Test bug!!!'))
             .catch((err) => {
-            if (err.code !== utils.DjatyErrorCodes.NO_DJATY_REQ_ID_FOR_TEMP_BUG) {
+            if (err.code !== djatyErrorCodes_1.DjatyErrorCodes.NO_DJATY_REQ_ID_FOR_TEMP_BUG) {
                 throw err;
             }
         });
