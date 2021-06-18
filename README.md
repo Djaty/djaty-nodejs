@@ -12,7 +12,7 @@ by just including it at the root app file and passing the `apiKey` and `apiSecre
 attributes as the following example:
 
 ```javascript
-const djaty = require('@djaty/djaty-nodejs');
+const { djaty } = require('@djaty/djaty-nodejs');
 
 djaty.init({
   apiKey: 'API_KEY',
