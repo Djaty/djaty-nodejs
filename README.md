@@ -1,4 +1,5 @@
 # Djaty NodeJS SDK
+The SDK records user sessions and sends them to Djaty servers. It records server requests, logs, HTTP requests, and exceptions and integrates with Express, Koa and Loopback.
 
 ## Installation
 `$ npm install @djaty/djaty-nodejs`
