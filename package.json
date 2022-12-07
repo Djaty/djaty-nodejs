@@ -47,7 +47,7 @@
     "computer-name": "0.1.0",
     "cookie": "0.3.1",
     "debug": "3.1.0",
-    "express": "4.16.2",
+    "express": "4.18.2",
     "ip": "1.1.5",
     "json-stringify-safe": "5.0.1",
     "koa": "2.4.1",
