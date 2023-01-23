@@ -77,7 +77,7 @@
     "@types/node": "^6.0.46",
     "@types/winston": "2.3.9",
     "chai": "^3.5.0",
-    "chai-http": "^3.0.0",
+    "chai-http": "^4.3.0",
     "commitizen": "^4.0.3",
     "cz-conventional-changelog": "^3.0.2",
     "dotenv-cli": "^3.1.0",
